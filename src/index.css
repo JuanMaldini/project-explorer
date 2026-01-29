@@ -5,14 +5,81 @@
   font-family: sans-serif;
 }
 
+
 :root {
-  --sidebar-width: 15%;
+  --sidebar-width: clamp(240px, 18vw, 320px);
   --header-height: 80px;
+
+  /* Default (dark) theme palette */
+  --color-bg: #0b0f17;
+  --color-surface: #0f172a;
+  --color-surface-2: #111c33;
+  --color-text: #e5e7eb;
+  --color-text-muted: #9ca3af;
+  --color-border: #25324a;
+
+  /* Accents */
+  --color-accent: #ffffff;
+  --color-accent-2: var(--color-accent);
+  --color-link: #8ab4ff;
+  --color-warning: #d5ab55;
+
+  /* Components */
+  --color-input-bg: #0b1220;
+  --color-card-bg: var(--color-surface);
+
+  /* Effects */
+  --shadow-1: 0 10px 30px rgba(0, 0, 0, 0.35);
+  --focus-ring: 0 0 0 3px rgba(138, 180, 255, 0.35);
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+/* App layout: 2 columns (sidebar | main). */
+.app-shell {
+  min-height: 100dvh;
+  display: grid;
+  grid-template-columns: var(--sidebar-width) 1fr;
+}
+
+.app-sidebar {
+  min-width: 0;
+}
+
+.app-main {
+  min-width: 0;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-main-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.app-main-content {
+  flex: 1;
+  min-width: 0;
+  padding: 20px;
 }
 
 a {
   text-decoration: none;
-  color: rgb(97, 97, 97);
+  color: var(--color-text-muted);
+}
+
+a:hover {
+  color: var(--color-link);
 }
 
 li {
@@ -22,10 +89,14 @@ li {
 .btns {
   padding: 10px 20px;
   margin-right: 6px;
-  background: transparent;
+  background: var(--color-surface);
   border: none;
-  border: 0.6px solid #ccc;
+  border: 1px solid var(--color-border);
   border-radius: 5px;
-  color: #323232;
+  color: var(--color-text);
   cursor: pointer;
+}
+
+.btns:hover {
+  border-color: var(--color-link);
 }

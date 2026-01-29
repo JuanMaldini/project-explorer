@@ -2,6 +2,7 @@
   font-size: 22px;
   font-weight: normal;
   margin-bottom: 20px;
+  color: var(--color-text);
 }
 
 .sidebar-items {
@@ -32,20 +33,18 @@
   left: 0;
   height: 20px;
   width: 20px;
-  background-color: #eee;
+  background-color: var(--color-surface-2);
+  border: 1px solid var(--color-border);
   border-radius: 50%;
 }
 
-.all {
-  background: linear-gradient(blue, crimson);
-}
-
 .sidebar-label-container:hover input ~ .checkmark {
-  background-color: #ccc;
+  background-color: white;
 }
 
 .sidebar-label-container input:checked ~ .checkmark {
-  background-color: #2196f3;
+  background-color: var(--color-link);
+  border-color: var(--color-link);
 }
 
 .checkmark:after {
@@ -64,10 +63,10 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: white;
+  background: var(--color-text);
 }
 
 .line {
   margin-top: 3rem;
-  border-color: #f7f7f7;
+  border-color: var(--color-border);
 }

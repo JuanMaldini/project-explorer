@@ -1,11 +1,11 @@
 import Category from "./Category/Category";
 import "./Sidebar.css";
 
-const Sidebar = ({ handleChange }) => {
+const Sidebar = ({ handleChange, categories = [] }) => {
   return (
     <>
       <section className="sidebar">
-        <Category handleChange={handleChange} />
+        <Category handleChange={handleChange} categories={categories} />
       </section>
     </>
   );

@@ -1,17 +1,53 @@
-import Button from "../components/Button";
 import "./Recommended.css";
+import { IoIosAddCircleOutline } from "react-icons/io";
+import "../components/IconButton.css";
 
-const Recommended = ({ handleClick }) => {
+const Recommended = ({
+  tags = [],
+  selectedTags = [],
+  onToggleTag,
+  onClearTags,
+  onAdd,
+}) => {
+
   return (
     <>
       <div>
-        <h2 className="recommended-title">Project</h2>
+        <div className="wrap-title">
+          <button
+            type="button"
+            className="icon-btn"
+            aria-label="Add project"
+            title="Add project"
+            onClick={() => onAdd?.()}
+          >
+            <IoIosAddCircleOutline size={22} />
+          </button>
+        </div>
         <div className="recommended-flex">
-          <Button onClickHandler={handleClick} value="" title="All Projects" />
-          <Button onClickHandler={handleClick} value="Nike" title="Nike" />
-          <Button onClickHandler={handleClick} value="Adidas" title="Adidas" />
-          <Button onClickHandler={handleClick} value="Puma" title="Puma" />
-          <Button onClickHandler={handleClick} value="Vans" title="Vans" />
+          <button
+            type="button"
+            className={`btns tag-btn ${
+              selectedTags.length === 0 ? "tag-btn-active" : ""
+            }`}
+            onClick={() => onClearTags?.()}
+          >
+            All Projects
+          </button>
+
+          {tags.map((tag) => {
+            const isActive = selectedTags.includes(tag);
+            return (
+              <button
+                key={tag}
+                type="button"
+                className={`btns tag-btn ${isActive ? "tag-btn-active" : ""}`}
+                onClick={() => onToggleTag?.(tag)}
+              >
+                {tag}
+              </button>
+            );
+          })}
         </div>
       </div>
     </>

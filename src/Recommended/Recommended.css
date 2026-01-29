@@ -1,11 +1,20 @@
 .recommended-flex {
   display: flex;
-  margin-left: 20rem;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-left: 0;
 }
 
-.recommended-title {
-  margin-left: 20rem;
-  margin-bottom: 20px;
-  margin-top: 20px;
-  font-size: 20px;
+.wrap-title{
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btns.tag-btn:hover,
+.btns.tag-btn.tag-btn-active {
+  background: var(--color-surface-2);
+  border-color: var(--color-link);
+  color: var(--color-text);
 }

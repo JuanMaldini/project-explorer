@@ -1,0 +1,29 @@
+.icon-btn {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  padding: 6px;
+  border-radius: 10px;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 140ms ease, background-color 140ms ease,
+    transform 140ms ease;
+}
+
+.icon-btn:hover {
+  color: var(--color-text);
+  background: var(--color-surface-2);
+  transform: translateY(-1px);
+}
+
+.icon-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.icon-btn--danger:hover {
+  color: var(--color-accent);
+}

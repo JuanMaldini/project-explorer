@@ -1,0 +1,22 @@
+nav {
+  display: flex;
+  border-bottom: 2px solid #ff0c0c;
+  justify-content: space-around;
+  align-items: center;
+  height: var(--header-height);
+  padding: 0 20px;
+  z-index: 999;
+  margin-left: var(--sidebar-width);
+  width: calc(100% - var(--sidebar-width));
+}
+
+input {
+  padding: 12px 20px;
+  border: none;
+  background: hsl(0, 6%, 97%);
+  outline: none;
+  margin-right: 20px;
+  border-radius: 5px;
+  position: relative;
+  width: 14rem;
+}

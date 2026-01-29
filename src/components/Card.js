@@ -6,8 +6,20 @@ import "./IconButton.css";
 const Card = ({
   img,
   title,
+  path,
   onEdit,
 }) => {
+  const handleCopyPath = async () => {
+    const raw = String(path ?? "");
+    if (!raw) return;
+
+    try {
+      await navigator.clipboard.writeText(raw);
+    } catch {
+      window.prompt("Copy path:", raw);
+    }
+  };
+
   return (
     <>
       <section className="card">
@@ -21,9 +33,9 @@ const Card = ({
           <button
             type="button"
             className="icon-btn"
-            aria-label="Open location"
-            title="Open location"
-            onClick={() => onEdit?.()}
+            aria-label="Copy path"
+            title="Copy path"
+            onClick={handleCopyPath}
           >
             <FaRegFolderOpen size={18} />
           </button>

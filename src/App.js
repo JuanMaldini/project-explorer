@@ -1,20 +1,50 @@
-import { useMemo, useState } from "react";
-import Navigation from "./Navigation/Nav";
+import { useEffect, useMemo, useState } from "react";
 import Products from "./Products/Products";
-import initialData from "./db/data.json";
 import Recommended from "./Recommended/Recommended";
-import Sidebar from "./Sidebar/Sidebar";
 import Card from "./components/Card";
 import Modal from "./modal/modal";
 import "./index.css";
 
 function App() {
-  const [projects] = useState(() => (Array.isArray(initialData) ? initialData : []));
+  const [projects, setProjects] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [query, setQuery] = useState("");
   const [selectedTags, setSelectedTags] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalTitle, setModalTitle] = useState("Project");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const sanitizeRawPathJson = (text) => {
+      // Allows writing Windows paths with single backslashes inside the "path" field
+      // by converting them to valid JSON escape sequences before JSON.parse.
+      return String(text ?? "").replace(
+        /"path"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)"/g,
+        (match, pathValue) => {
+          const escaped = String(pathValue).replace(/\\/g, "\\\\");
+          return match.replace(pathValue, escaped);
+        }
+      );
+    };
+
+    const load = async () => {
+      try {
+        const res = await fetch("/data.json", { cache: "no-store" });
+        const raw = await res.text();
+        const sanitized = sanitizeRawPathJson(raw);
+        const parsed = JSON.parse(sanitized);
+        if (!cancelled) setProjects(Array.isArray(parsed) ? parsed : []);
+      } catch {
+        if (!cancelled) setProjects([]);
+      }
+    };
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const openAddModal = () => {
     setModalTitle("Add Project");
@@ -34,8 +64,8 @@ function App() {
     setQuery(event.target.value);
   };
 
-  const handleChange = (event) => {
-    setSelectedCategory(event.target.value);
+  const selectCategory = (category) => {
+    setSelectedCategory(category);
   };
 
   const toggleTag = (tag) => {
@@ -94,11 +124,12 @@ function App() {
 
   const result = useMemo(
     () =>
-      visibleProjects.map(({ img, title }, index) => (
+      visibleProjects.map(({ img, title, path }, index) => (
         <Card
           key={`${title}-${index}`}
           img={img}
           title={title}
+          path={path}
           onEdit={openEditModal}
         />
       )),
@@ -108,21 +139,18 @@ function App() {
   return (
     <>
       <div className="app-shell">
-        <div className="app-sidebar">
-          <Sidebar handleChange={handleChange} categories={categories} />
-        </div>
-
         <div className="app-main">
-          <div className="app-main-header">
-            <Navigation query={query} handleInputChange={handleInputChange} />
-          </div>
-
           <div className="app-main-content">
             <Recommended
+              query={query}
+              onQueryChange={handleInputChange}
               tags={tags}
+              categories={categories}
               selectedTags={selectedTags}
+              selectedCategory={selectedCategory}
               onToggleTag={toggleTag}
               onClearTags={clearTags}
+              onSelectCategory={selectCategory}
               onAdd={openAddModal}
             />
             <Products result={result} />

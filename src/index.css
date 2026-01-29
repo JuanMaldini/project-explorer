@@ -7,7 +7,6 @@
 
 
 :root {
-  --sidebar-width: clamp(240px, 18vw, 320px);
   --header-height: 80px;
 
   /* Default (dark) theme palette */
@@ -43,15 +42,11 @@ body {
   color: var(--color-text);
 }
 
-/* App layout: 2 columns (sidebar | main). */
+/* App layout: single main column. */
 .app-shell {
   min-height: 100dvh;
   display: grid;
-  grid-template-columns: var(--sidebar-width) 1fr;
-}
-
-.app-sidebar {
-  min-width: 0;
+  grid-template-columns: 1fr;
 }
 
 .app-main {
@@ -59,12 +54,6 @@ body {
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-}
-
-.app-main-header {
-  position: sticky;
-  top: 0;
-  z-index: 10;
 }
 
 .app-main-content {

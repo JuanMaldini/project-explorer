@@ -16,6 +16,8 @@
     "build": "react-scripts build",
     "electron:build": "react-scripts build && set CSC_IDENTITY_AUTO_DISCOVERY=false&& electron-builder --win",
     "dist": "npm run electron:build",
+    "dist:win": "react-scripts build && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win nsis",
+    "dist:win:dir": "react-scripts build && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win dir",
     "eject": "react-scripts eject"
   },
   "devDependencies": {
@@ -29,6 +31,9 @@
   "build": {
     "appId": "com.projectexplorer.app",
     "productName": "Project Explorer",
+    "directories": {
+      "output": "release"
+    },
     "extraMetadata": {
       "main": "electron/main.js"
     },

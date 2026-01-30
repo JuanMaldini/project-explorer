@@ -5,9 +5,6 @@
   "homepage": "./",
   "main": "electron/main.js",
   "dependencies": {
-    "@testing-library/jest-dom": "^5.17.0",
-    "@testing-library/react": "^13.4.0",
-    "@testing-library/user-event": "^13.5.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-icons": "^5.0.1",
@@ -19,7 +16,6 @@
     "build": "react-scripts build",
     "electron:build": "react-scripts build && set CSC_IDENTITY_AUTO_DISCOVERY=false&& electron-builder --win",
     "dist": "npm run electron:build",
-    "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
   "devDependencies": {
@@ -48,8 +44,7 @@
   },
   "eslintConfig": {
     "extends": [
-      "react-app",
-      "react-app/jest"
+      "react-app"
     ]
   },
   "browserslist": {

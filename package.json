@@ -1,7 +1,9 @@
 {
-  "name": "Project-Explorer",
+  "name": "project-explorer",
   "version": "0.1.0",
   "private": true,
+  "homepage": "./",
+  "main": "electron/main.js",
   "dependencies": {
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
@@ -12,10 +14,32 @@
     "react-scripts": "5.0.1"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "start": "react-scripts build && electron .",
     "build": "react-scripts build",
+    "electron:build": "react-scripts build && set CSC_IDENTITY_AUTO_DISCOVERY=false&& electron-builder --win",
+    "dist": "npm run electron:build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
+  },
+  "devDependencies": {
+    "electron": "^28.2.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.projectexplorer.app",
+    "productName": "Project Explorer",
+    "extraMetadata": {
+      "main": "electron/main.js"
+    },
+    "files": [
+      "build/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis",
+      "signAndEditExecutable": false
+    }
   },
   "eslintConfig": {
     "extends": [

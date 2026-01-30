@@ -10,6 +10,24 @@ const {
 const path = require("path");
 const fs = require("fs/promises");
 
+const normalizeOpenPathInput = (input) => {
+  const raw = String(input ?? "").trim();
+  if (!raw) return "";
+
+  // Keep file:// and other URLs unchanged.
+  if (/^(https?:|data:|blob:|file:)/i.test(raw)) return raw;
+
+  // UNC: \\server\share\folder -> keep exactly two leading backslashes.
+  if (/^[\\/]{2,}/.test(raw)) {
+    const rest = raw.replace(/^[\\/]+/, "");
+    const cleaned = rest.replace(/[\\/]+/g, "\\");
+    return `\\\\${cleaned}`;
+  }
+
+  // Drive/local path: collapse repeated separators.
+  return raw.replace(/[\\/]+/g, "\\");
+};
+
 if (!app.isPackaged) {
   try {
     // Reload Electron when main/preload files change during development.
@@ -106,13 +124,63 @@ app.whenReady().then(async () => {
     return true;
   });
 
+  ipcMain.handle("export-projects", async (_event, projects) => {
+    if (!Array.isArray(projects)) {
+      throw new Error("export-projects expects an array");
+    }
+
+    const { canceled, filePath } = await dialog.showSaveDialog({
+      title: "Export projects",
+      defaultPath: "project-explorer-export.json",
+      filters: [{ name: "JSON", extensions: ["json"] }],
+    });
+
+    if (canceled || !filePath) return false;
+
+    const text = JSON.stringify(projects, null, 2);
+    await fs.writeFile(filePath, text, "utf8");
+    return true;
+  });
+
+  ipcMain.handle("import-projects", async () => {
+    const { canceled, filePaths } = await dialog.showOpenDialog({
+      title: "Import projects",
+      properties: ["openFile"],
+      filters: [{ name: "JSON", extensions: ["json"] }],
+    });
+
+    if (canceled || !filePaths?.length) return null;
+
+    const importPath = filePaths[0];
+    const raw = await fs.readFile(importPath, "utf8");
+
+    let parsed;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      throw new Error("Selected file is not valid JSON");
+    }
+
+    if (!Array.isArray(parsed)) {
+      throw new Error("Imported JSON must be an array of projects");
+    }
+
+    // Overwrite the app's data.json.
+    const writablePath = getWritableDataJsonPath();
+    const text = JSON.stringify(parsed, null, 2);
+    await fs.mkdir(path.dirname(writablePath), { recursive: true });
+    await fs.writeFile(writablePath, text, "utf8");
+
+    return parsed;
+  });
+
   ipcMain.handle("copy-text", async (_event, text) => {
     clipboard.writeText(String(text ?? ""));
     return true;
   });
 
   ipcMain.handle("open-path", async (_event, targetPath) => {
-    const raw = String(targetPath ?? "").trim();
+    const raw = normalizeOpenPathInput(targetPath);
     if (!raw) return false;
 
     // Tries to open the folder/file using the OS shell.

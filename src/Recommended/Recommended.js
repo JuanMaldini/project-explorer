@@ -1,5 +1,7 @@
 import "./Recommended.css";
 import { IoIosAddCircleOutline } from "react-icons/io";
+import { CiExport } from "react-icons/ci";
+import { CiImport } from "react-icons/ci";
 import "../components/IconButton.css";
 
 const Recommended = ({
@@ -13,6 +15,8 @@ const Recommended = ({
   onClearTags,
   onSelectCategory,
   onAdd,
+  onExport,
+  onImport,
 }) => {
   return (
     <>
@@ -28,6 +32,26 @@ const Recommended = ({
             onClick={() => onAdd?.()}
           >
             <IoIosAddCircleOutline size={22} />
+          </button>
+
+          <button
+            type="button"
+            className="icon-btn"
+            aria-label="Export projects"
+            title="Export projects"
+            onClick={() => onExport?.()}
+          >
+            <CiExport size={22} />
+          </button>
+
+          <button
+            type="button"
+            className="icon-btn"
+            aria-label="Import projects"
+            title="Import projects (overwrite)"
+            onClick={() => onImport?.()}
+          >
+            <CiImport size={22} />
           </button>
 
           <input

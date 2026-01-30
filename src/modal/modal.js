@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { IoMdClose } from "react-icons/io";
 import "./modal.css";
 import "../components/IconButton.css";
@@ -29,6 +29,7 @@ const Modal = ({
   mode = "add", // "add" | "edit"
   project,
   categories = [],
+  tags = [],
   onSave,
   onClose,
 }) => {
@@ -38,6 +39,8 @@ const Modal = ({
   const [formPath, setFormPath] = useState("");
   const [formCategory, setFormCategory] = useState("");
   const [formTags, setFormTags] = useState("");
+  const [isTagSuggestOpen, setIsTagSuggestOpen] = useState(false);
+  const tagBlurTimerRef = useRef(null);
 
   const isEdit = mode === "edit";
   const canUseDialogs =
@@ -45,7 +48,80 @@ const Modal = ({
     window.electronAPI?.selectImage &&
     window.electronAPI?.selectFolder;
 
+  const parseTags = (text) => {
+    const list = String(text ?? "")
+      .split(",")
+      .map((t) => t.trim())
+      .filter(Boolean);
+    return Array.from(new Set(list));
+  };
+
   const previewSrc = useMemo(() => toDisplayImageSrc(formImg), [formImg]);
+
+  const tagInputState = useMemo(() => {
+    const raw = String(formTags ?? "");
+    const endsWithComma = /,\s*$/.test(raw);
+    const lastCommaIndex = raw.lastIndexOf(",");
+
+    if (endsWithComma) {
+      const completedText = raw.replace(/,\s*$/, "");
+      return {
+        completed: parseTags(completedText),
+        token: "",
+      };
+    }
+
+    if (lastCommaIndex === -1) {
+      return {
+        completed: [],
+        token: raw.trim(),
+      };
+    }
+
+    const completedText = raw.slice(0, lastCommaIndex);
+    const tokenText = raw.slice(lastCommaIndex + 1);
+    return {
+      completed: parseTags(completedText),
+      token: tokenText.trim(),
+    };
+  }, [formTags]);
+
+  const tagSuggestions = useMemo(() => {
+    const token = String(tagInputState.token ?? "").toLowerCase();
+    const completedSet = new Set(
+      (tagInputState.completed ?? []).map((t) => String(t).toLowerCase()),
+    );
+
+    const list = Array.isArray(tags) ? tags : [];
+    const normalized = list
+      .map((t) => String(t ?? "").trim())
+      .filter(Boolean);
+
+    const dedupLower = new Set();
+    const unique = [];
+    for (const t of normalized) {
+      const lower = t.toLowerCase();
+      if (dedupLower.has(lower)) continue;
+      dedupLower.add(lower);
+      unique.push(t);
+    }
+
+    return unique
+      .filter((t) => !completedSet.has(t.toLowerCase()))
+      .filter((t) => (!token ? true : t.toLowerCase().includes(token)))
+      .sort((a, b) => a.localeCompare(b))
+      .slice(0, 12);
+  }, [tags, tagInputState]);
+
+  useEffect(() => {
+    return () => {
+      if (tagBlurTimerRef.current) {
+        clearTimeout(tagBlurTimerRef.current);
+        tagBlurTimerRef.current = null;
+      }
+    };
+  }, []);
+
   useEffect(() => {
     if (!isOpen) return;
 
@@ -83,8 +159,6 @@ const Modal = ({
     setFormTags("");
   }, [isOpen, isEdit, project, description]);
 
-  if (!isOpen) return null;
-
   const resetAndClose = () => {
     setFormTitle("");
     setFormDescription(String(description ?? ""));
@@ -100,12 +174,33 @@ const Modal = ({
     resetAndClose();
   };
 
-  const parseTags = (text) => {
-    const list = String(text ?? "")
-      .split(",")
-      .map((t) => t.trim())
-      .filter(Boolean);
-    return Array.from(new Set(list));
+  if (!isOpen) return null;
+
+  const applyTagSuggestion = (suggestion) => {
+    const cleaned = String(suggestion ?? "").trim();
+    if (!cleaned) return;
+
+    const next = Array.from(
+      new Set([...(tagInputState.completed ?? []), cleaned]),
+    );
+    setFormTags(next.join(", ") + ", ");
+    setIsTagSuggestOpen(false);
+  };
+
+  const handleTagFocus = () => {
+    if (tagBlurTimerRef.current) {
+      clearTimeout(tagBlurTimerRef.current);
+      tagBlurTimerRef.current = null;
+    }
+    setIsTagSuggestOpen(true);
+  };
+
+  const handleTagBlur = () => {
+    // Delay closing so clicks on suggestions register.
+    tagBlurTimerRef.current = setTimeout(() => {
+      setIsTagSuggestOpen(false);
+      tagBlurTimerRef.current = null;
+    }, 120);
   };
 
   const handleBrowseImage = async () => {
@@ -274,14 +369,39 @@ const Modal = ({
 
               <div className="form-group form-span-2">
                 <label htmlFor="tags">Tags (comma separated)</label>
-                <input
-                  type="text"
-                  id="tags"
-                  name="tags"
-                  value={formTags}
-                  onChange={(e) => setFormTags(e.target.value)}
-                  placeholder="tag1, tag2, tag3"
-                />
+                <div className="tags-field">
+                  <input
+                    type="text"
+                    id="tags"
+                    name="tags"
+                    value={formTags}
+                    onChange={(e) => setFormTags(e.target.value)}
+                    onFocus={handleTagFocus}
+                    onBlur={handleTagBlur}
+                    placeholder="tag1, tag2, tag3"
+                    autoComplete="off"
+                  />
+
+                  {isTagSuggestOpen && tagSuggestions.length ? (
+                    <div className="tags-suggestions" role="listbox">
+                      {tagSuggestions.map((t) => (
+                        <button
+                          key={t}
+                          type="button"
+                          className="tags-suggestion"
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => applyTagSuggestion(t)}
+                          role="option"
+                          aria-selected="false"
+                          aria-label={`Use tag ${t}`}
+                          title={`Use tag: ${t}`}
+                        >
+                          {t}
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
               </div>
             </div>
 

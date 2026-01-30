@@ -6,6 +6,37 @@ import Modal from "./modal/modal";
 import "./App.css";
 import "./index.css";
 
+const normalizeStoredPath = (value) => {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "";
+
+  // Keep URLs as-is.
+  if (/^(https?:|data:|blob:|file:)/i.test(raw)) return raw;
+
+  // UNC path (\\server\share\folder). Keep exactly two leading backslashes.
+  if (/^[\\/]{2,}/.test(raw)) {
+    const rest = raw.replace(/^[\\/]+/, "");
+    const cleaned = rest.replace(/[\\/]+/g, "\\");
+    return `\\\\${cleaned}`;
+  }
+
+  // Drive path (C:\folder). Collapse repeated separators.
+  if (/^[a-zA-Z]:[\\/]/.test(raw)) {
+    return raw.replace(/[\\/]+/g, "\\");
+  }
+
+  return raw;
+};
+
+const normalizeProjectPaths = (project) => {
+  if (!project || typeof project !== "object") return project;
+  return {
+    ...project,
+    img: normalizeStoredPath(project.img),
+    path: normalizeStoredPath(project.path),
+  };
+};
+
 function App() {
   const [projects, setProjects] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
@@ -19,7 +50,7 @@ function App() {
   useEffect(() => {
     let cancelled = false;
 
-    const sanitizeRawPathJson = (text) => {
+    const sanitizeRawPathJsonIfNeeded = (text) => {
       const sanitizeField = (input, fieldName) =>
         String(input ?? "").replace(
           new RegExp(
@@ -27,15 +58,25 @@ function App() {
             "g",
           ),
           (match, fieldValue) => {
-            const escaped = String(fieldValue).replace(/\\/g, "\\\\");
-            return match.replace(fieldValue, escaped);
+            const fixed = String(fieldValue).replace(
+              /\\(?!["\\/bfnrtu])/g,
+              "\\\\",
+            );
+            return match.replace(fieldValue, fixed);
           },
         );
 
-      // Allows writing Windows paths with single backslashes inside fields
-      // by converting them to valid JSON escape sequences before JSON.parse.
       const s1 = sanitizeField(text, "path");
       return sanitizeField(s1, "img");
+    };
+
+    const parseProjectsText = (text) => {
+      try {
+        return JSON.parse(String(text ?? ""));
+      } catch {
+        const sanitized = sanitizeRawPathJsonIfNeeded(text);
+        return JSON.parse(String(sanitized ?? ""));
+      }
     };
 
     const load = async () => {
@@ -50,9 +91,29 @@ function App() {
           const res = await fetch(url, { cache: "no-store" });
           return await res.text();
         })();
-        const sanitized = sanitizeRawPathJson(raw);
-        const parsed = JSON.parse(sanitized);
-        if (!cancelled) setProjects(Array.isArray(parsed) ? parsed : []);
+
+        const parsed = parseProjectsText(raw);
+        const array = Array.isArray(parsed) ? parsed : [];
+        const normalized = array.map(normalizeProjectPaths);
+
+        if (!cancelled) setProjects(normalized);
+
+        try {
+          const api =
+            typeof window !== "undefined" ? window.electronAPI : undefined;
+          if (api?.saveProjects) {
+            const changed = normalized.some((p, i) => {
+              const prev = array[i];
+              return (
+                String(prev?.img ?? "") !== String(p?.img ?? "") ||
+                String(prev?.path ?? "") !== String(p?.path ?? "")
+              );
+            });
+            if (changed) await api.saveProjects(normalized);
+          }
+        } catch {
+          // ignore auto-heal failures
+        }
       } catch {
         if (!cancelled) setProjects([]);
       }
@@ -87,7 +148,12 @@ function App() {
     try {
       const api =
         typeof window !== "undefined" ? window.electronAPI : undefined;
-      if (api?.saveProjects) await api.saveProjects(nextProjects);
+      if (api?.saveProjects) {
+        const normalized = Array.isArray(nextProjects)
+          ? nextProjects.map(normalizeProjectPaths)
+          : [];
+        await api.saveProjects(normalized);
+      }
     } catch {
       // keep UI state even if persistence fails
     }
@@ -108,15 +174,16 @@ function App() {
 
   const saveFromModal = useCallback(
     async (draft) => {
+      const normalizedDraft = normalizeProjectPaths(draft);
       setProjects((prev) => {
         let nextProjects = prev;
 
         if (modalMode === "edit" && modalProject) {
           nextProjects = prev.map((p) =>
-            p === modalProject ? { ...p, ...draft } : p,
+            p === modalProject ? { ...p, ...normalizedDraft } : p,
           );
         } else {
-          nextProjects = [...prev, draft];
+          nextProjects = [...prev, normalizedDraft];
         }
 
         persistProjects(nextProjects);
@@ -145,6 +212,76 @@ function App() {
   const clearTags = () => {
     setSelectedTags([]);
   };
+
+  const exportAllProjects = useCallback(async () => {
+    try {
+      const api =
+        typeof window !== "undefined" ? window.electronAPI : undefined;
+
+      const payload = Array.isArray(projects)
+        ? projects.map(normalizeProjectPaths)
+        : [];
+
+      if (api?.exportProjects) {
+        await api.exportProjects(payload);
+        return;
+      }
+
+      // Web fallback: download JSON.
+      const blob = new Blob([JSON.stringify(payload, null, 2)], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "project-explorer-export.json";
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      // ignore
+    }
+  }, [projects]);
+
+  const importAllProjects = useCallback(async () => {
+    try {
+      const api =
+        typeof window !== "undefined" ? window.electronAPI : undefined;
+
+      if (api?.importProjects) {
+        const imported = await api.importProjects();
+        if (Array.isArray(imported)) {
+          const normalized = imported.map(normalizeProjectPaths);
+          setProjects(normalized);
+          setSelectedCategory("");
+          setSelectedTags([]);
+        }
+        return;
+      }
+
+      // Web fallback: file picker.
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "application/json,.json";
+      input.onchange = async () => {
+        try {
+          const file = input.files?.[0];
+          if (!file) return;
+          const text = await file.text();
+          const parsed = JSON.parse(text);
+          if (!Array.isArray(parsed)) return;
+          const normalized = parsed.map(normalizeProjectPaths);
+          setProjects(normalized);
+          setSelectedCategory("");
+          setSelectedTags([]);
+        } catch {
+          // ignore
+        }
+      };
+      input.click();
+    } catch {
+      // ignore
+    }
+  }, []);
 
   const categories = useMemo(() => {
     const list = projects
@@ -220,6 +357,8 @@ function App() {
               onClearTags={clearTags}
               onSelectCategory={selectCategory}
               onAdd={openAddModal}
+              onExport={exportAllProjects}
+              onImport={importAllProjects}
             />
             <div className="spacerbar-section" />
             <Products result={result} />
@@ -233,6 +372,7 @@ function App() {
         mode={modalMode}
         project={modalProject}
         categories={categories}
+        tags={tags}
         onSave={saveFromModal}
         onClose={closeModal}
       />

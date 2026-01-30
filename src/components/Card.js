@@ -4,6 +4,8 @@ import { MdDeleteOutline } from "react-icons/md";
 import "./Card.css";
 import "./IconButton.css";
 
+const FALLBACK_IMAGE_SRC = "icons/VP_logo.svg";
+
 const toDisplayImageSrc = (value) => {
   const raw = String(value ?? "").trim();
   if (!raw) return "";
@@ -27,7 +29,9 @@ const toDisplayImageSrc = (value) => {
   return raw;
 };
 
-const Card = ({ img, title, path, onEdit, onDelete }) => {
+const Card = ({ img, title, description, path, onEdit, onDelete }) => {
+  const displayImgSrc = toDisplayImageSrc(img) || FALLBACK_IMAGE_SRC;
+
   const handleOpenFolder = async () => {
     const raw = String(path ?? "");
     if (!raw) return;
@@ -50,9 +54,22 @@ const Card = ({ img, title, path, onEdit, onDelete }) => {
   return (
     <>
       <section className="card">
-        <img src={toDisplayImageSrc(img)} alt={title} className="card-img" />
+        <img
+          src={displayImgSrc}
+          alt={title}
+          className="card-img"
+          onError={(e) => {
+            const target = e.currentTarget;
+            if (target?.src?.includes(FALLBACK_IMAGE_SRC)) return;
+            target.onerror = null;
+            target.src = FALLBACK_IMAGE_SRC;
+          }}
+        />
         <div className="card-details">
           <h3 className="card-title">{title}</h3>
+          {String(description ?? "").trim() ? (
+            <p className="card-description">{description}</p>
+          ) : null}
         </div>
 
         <div className="card-actions">

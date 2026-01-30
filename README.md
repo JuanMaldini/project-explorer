@@ -5,7 +5,8 @@ App de escritorio (Electron + React) para guardar y explorar tus proyectos en fo
 ## Uso rápido
 
 - Instalar dependencias: `npm install`
-- Abrir la app: `npm start` (compila React y abre Electron)
+- Abrir la app (desarrollo, recarga automática): `npm start`
+- Abrir la app (modo build/local, como antes): `npm run start:prod`
 - Generar build web: `npm run build`
 - Empaquetar para Windows (installer): `npm run dist`
 

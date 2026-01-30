@@ -173,7 +173,8 @@ function App() {
 
     return projects.filter((p) => {
       const title = String(p?.title ?? "").toLowerCase();
-      const matchesQuery = !q || title.includes(q);
+      const desc = String(p?.description ?? "").toLowerCase();
+      const matchesQuery = !q || title.includes(q) || desc.includes(q);
 
       const matchesCategory =
         !selectedCategory || p?.category === selectedCategory;
@@ -193,6 +194,7 @@ function App() {
           key={`${project?.title ?? "project"}-${index}`}
           img={project?.img}
           title={project?.title}
+          description={project?.description}
           path={project?.path}
           onEdit={() => openEditModal(project)}
           onDelete={() => deleteProject(project)}

@@ -1,16 +1,44 @@
 [
   {
-    "path": "C:\New folder\Project\01",
-    "img": "E:\Recursos\Texturas\ART\1 cuadro11.jpg",
+    "path": "C:\\\\New folder\\\\Project\\\\01",
+    "img": "E:\\\\Recursos\\\\Texturas\\\\ART\\\\1 cuadro11.jpg",
     "title": "Title 1",
-    "tag": ["Tag 1", "Tag 2"],
+    "description": "soy la descripcion de este proyecto",
+    "tag": [
+      "Tag 1",
+      "Tag 2"
+    ],
     "category": "Residential"
   },
   {
-    "path": "C:\New folder\Project\02",
-    "img": "E:\Recursos\Texturas\ART\2ae17eee05d683190d132c1faeef0680.jpg",
+    "path": "C:\\\\New folder\\\\Project\\\\02",
+    "img": "E:\\\\Recursos\\\\Texturas\\\\ART\\\\2ae17eee05d683190d132c1faeef0680.jpg",
     "title": "Title 2",
-    "tag": ["Tag 2", "Tag 4"],
+    "description": "soy la descripcion de este proyecto 2",
+    "tag": [
+      "Tag 2",
+      "Tag 4"
+    ],
     "category": "Hospitality"
+  },
+  {
+    "title": "projecto de prueba otro",
+    "img": "C:\\\\Users\\\\juanm\\\\Downloads\\\\1769196737168_screenshot.png",
+    "path": "C:\\\\Program Files",
+    "description": "descripcion del projecto de prueba otro",
+    "category": "categoria nueva",
+    "tag": [
+      "tag nuevo",
+      "tag nuevA",
+      "2NuevaTag"
+    ]
+  },
+  {
+    "title": "titulo del proyecto",
+    "description": "descripcion del proyecto",
+    "img": "E:\\lenguaje.png",
+    "path": "",
+    "category": "categoria proyecto",
+    "tag": []
   }
 ]

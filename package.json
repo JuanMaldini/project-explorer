@@ -14,7 +14,8 @@
     "react-scripts": "5.0.1"
   },
   "scripts": {
-    "start": "react-scripts build && electron .",
+    "start": "concurrently -k \"react-scripts start\" \"wait-on http://localhost:3000 && cross-env ELECTRON_START_URL=http://localhost:3000 electron .\"",
+    "start:prod": "react-scripts build && electron .",
     "build": "react-scripts build",
     "electron:build": "react-scripts build && set CSC_IDENTITY_AUTO_DISCOVERY=false&& electron-builder --win",
     "dist": "npm run electron:build",
@@ -22,8 +23,12 @@
     "eject": "react-scripts eject"
   },
   "devDependencies": {
+    "concurrently": "^9.1.2",
+    "cross-env": "^7.0.3",
     "electron": "^28.2.0",
-    "electron-builder": "^24.13.3"
+    "electron-builder": "^24.13.3",
+    "electron-reload": "^2.0.0-alpha.1",
+    "wait-on": "^7.2.0"
   },
   "build": {
     "appId": "com.projectexplorer.app",

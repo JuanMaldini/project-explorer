@@ -25,6 +25,7 @@ const toDisplayImageSrc = (value) => {
 const Modal = ({
   isOpen,
   title = "Modal",
+  description = "",
   mode = "add", // "add" | "edit"
   project,
   categories = [],
@@ -32,6 +33,7 @@ const Modal = ({
   onClose,
 }) => {
   const [formTitle, setFormTitle] = useState("");
+  const [formDescription, setFormDescription] = useState("");
   const [formImg, setFormImg] = useState("");
   const [formPath, setFormPath] = useState("");
   const [formCategory, setFormCategory] = useState("");
@@ -60,6 +62,7 @@ const Modal = ({
 
     if (isEdit && project) {
       setFormTitle(String(project?.title ?? ""));
+      setFormDescription(String(project?.description ?? description ?? ""));
       setFormImg(String(project?.img ?? ""));
       setFormPath(String(project?.path ?? ""));
       setFormCategory(String(project?.category ?? ""));
@@ -73,16 +76,18 @@ const Modal = ({
 
     // Add mode
     setFormTitle("");
+    setFormDescription(String(description ?? ""));
     setFormImg("");
     setFormPath("");
     setFormCategory("");
     setFormTags("");
-  }, [isOpen, isEdit, project]);
+  }, [isOpen, isEdit, project, description]);
 
   if (!isOpen) return null;
 
   const resetAndClose = () => {
     setFormTitle("");
+    setFormDescription(String(description ?? ""));
     setFormImg("");
     setFormPath("");
     setFormCategory("");
@@ -126,6 +131,7 @@ const Modal = ({
 
     const next = {
       title: String(formTitle ?? "").trim(),
+      description: String(formDescription ?? "").trim(),
       img: String(formImg ?? "").trim(),
       path: String(formPath ?? "").trim(),
       category: String(formCategory ?? "").trim(),
@@ -174,6 +180,18 @@ const Modal = ({
                   onChange={(e) => setFormTitle(e.target.value)}
                   placeholder="Project title"
                   autoFocus
+                />
+              </div>
+
+              <div className="form-group form-span-2">
+                <label htmlFor="description">Description</label>
+                <textarea
+                  id="description"
+                  name="description"
+                  value={formDescription}
+                  onChange={(e) => setFormDescription(e.target.value)}
+                  placeholder="Short description (optional)"
+                  rows={3}
                 />
               </div>
 

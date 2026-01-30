@@ -10,6 +10,17 @@ const {
 const path = require("path");
 const fs = require("fs/promises");
 
+if (!app.isPackaged) {
+  try {
+    // Reload Electron when main/preload files change during development.
+    require("electron-reload")(path.join(app.getAppPath(), "electron"), {
+      hardResetMethod: "exit",
+    });
+  } catch {
+    // Optional in dev; ignore if dependency isn't installed yet.
+  }
+}
+
 const forcedUserDataPath = path.join(app.getPath("appData"), "ProjectExplorer");
 app.setPath("userData", forcedUserDataPath);
 app.commandLine.appendSwitch(
@@ -50,6 +61,9 @@ const readDataJsonText = async () => {
 const createWindow = async () => {
   Menu.setApplicationMenu(null);
 
+  const startUrl = process.env.ELECTRON_START_URL;
+  const isDevServer = !isPackaged && Boolean(startUrl);
+
   const mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
@@ -58,12 +72,21 @@ const createWindow = async () => {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
       nodeIntegration: false,
-      devTools: false,
+      devTools: !isPackaged,
+      // When using the React dev server (http://localhost:3000), Chromium may block
+      // loading local images via file://. Disable webSecurity only in dev server mode.
+      webSecurity: !isDevServer,
       sandbox: false,
     },
   });
 
-  await mainWindow.loadFile(path.join(app.getAppPath(), "build", "index.html"));
+  if (isDevServer) {
+    await mainWindow.loadURL(startUrl);
+  } else {
+    await mainWindow.loadFile(
+      path.join(app.getAppPath(), "build", "index.html"),
+    );
+  }
 };
 
 app.whenReady().then(async () => {

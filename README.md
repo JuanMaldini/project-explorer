@@ -1,25 +1,24 @@
-# Shop Search & Filter App
+# Project Explorer
 
-This React.js application enhances the shopping experience by providing search and filter functionalities. Whether users are browsing for specific products or refining their search criteria, this app offers a seamless experience, improving discoverability and user satisfaction.
+App de escritorio (Electron + React) para guardar y explorar tus proyectos en formato “tarjetas”: podés **buscar**, **filtrar** por categorías/tags, **agregar/editar/eliminar** y abrir la carpeta del proyecto desde el sistema.
 
-## Features:
+## Uso rápido
 
-- **Search:** Quickly find desired products by typing keywords into the search bar.
-- **Filtering:** Refine search results based on various attributes such as price range, category, brand, and color.
+- Instalar dependencias: `npm install`
+- Abrir la app: `npm start` (compila React y abre Electron)
+- Generar build web: `npm run build`
+- Empaquetar para Windows (installer): `npm run dist`
 
-![Demo Image](img1.png)
+Los datos se persisten en `data.json` (en desarrollo se usa `public/data.json`; empaquetado se guarda en `%AppData%\ProjectExplorer\data.json`).
 
-## Tech Stack:
+## Cómo funciona (simple)
 
-- **React.js:** Frontend framework for building dynamic user interfaces.
-- **JavaScript/JSX:** For programming logic and component rendering.
-- **CSS/SCSS:** Styling and layout customization.
-- **Redux (optional):** State management for scalable applications.
+La UI React lee/filtra la lista, y cuando guardás cambios llama a Electron por IPC para persistir el JSON y para acciones del sistema (abrir una carpeta, copiar texto, elegir imágenes/carpetas).
 
-## Usage:
-
-1. Clone the repository.
-2. Install dependencies using `npm install`.
-3. Start the development server with `npm start`.
-4. Run the app in an Electron window:
-   - `npm start` (builds React and opens Electron)
+```mermaid
+flowchart LR
+   UI[React UI] -->|window.electronAPI| PRE[preload.js]
+   PRE -->|IPC invoke| MAIN[electron/main.js]
+   MAIN -->|read/write| JSON[(data.json)]
+   MAIN -->|openPath / clipboard / dialogs| OS[Windows Shell]
+```

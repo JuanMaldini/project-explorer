@@ -1,4 +1,5 @@
 import { FaRegEdit, FaRegFolderOpen } from "react-icons/fa";
+import { FiMaximize } from "react-icons/fi";
 import { MdDeleteOutline } from "react-icons/md";
 
 import "./Card.css";
@@ -29,7 +30,15 @@ const toDisplayImageSrc = (value) => {
   return raw;
 };
 
-const Card = ({ img, title, description, path, onEdit, onDelete }) => {
+const Card = ({
+  img,
+  title,
+  description,
+  path,
+  onEdit,
+  onDelete,
+  onPreviewImage,
+}) => {
   const displayImgSrc = toDisplayImageSrc(img) || FALLBACK_IMAGE_SRC;
 
   const handleOpenFolder = async () => {
@@ -54,17 +63,29 @@ const Card = ({ img, title, description, path, onEdit, onDelete }) => {
   return (
     <>
       <section className="card">
-        <img
-          src={displayImgSrc}
-          alt={title}
-          className="card-img"
-          onError={(e) => {
-            const target = e.currentTarget;
-            if (target?.src?.includes(FALLBACK_IMAGE_SRC)) return;
-            target.onerror = null;
-            target.src = FALLBACK_IMAGE_SRC;
-          }}
-        />
+        <div className="card-img-wrap">
+          <img
+            src={displayImgSrc}
+            alt={title}
+            className="card-img"
+            onError={(e) => {
+              const target = e.currentTarget;
+              if (target?.src?.includes(FALLBACK_IMAGE_SRC)) return;
+              target.onerror = null;
+              target.src = FALLBACK_IMAGE_SRC;
+            }}
+          />
+
+          <button
+            type="button"
+            className="icon-btn card-img-zoom-btn"
+            aria-label="Maximize image"
+            title="Maximize"
+            onClick={() => onPreviewImage?.()}
+          >
+            <FiMaximize size={18} />
+          </button>
+        </div>
         <div className="card-spacer" aria-hidden="true" />
 
         <div className="card-bottom">

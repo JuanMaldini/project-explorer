@@ -32,3 +32,27 @@
   -webkit-line-clamp: 3;
   overflow: hidden;
 }
+
+.card-img-wrap {
+  position: relative;
+  align-self: center;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.card-img {
+  display: block;
+}
+
+.card-img-zoom-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  color: var(--color-text);
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(4px);
+}
+
+.card-img-zoom-btn:hover {
+  background: rgba(0, 0, 0, 0.5);
+}

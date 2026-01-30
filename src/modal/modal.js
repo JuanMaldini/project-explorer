@@ -26,7 +26,7 @@ const Modal = ({
   isOpen,
   title = "Modal",
   description = "",
-  mode = "add", // "add" | "edit"
+  mode = "add", // "add" | "edit" | "image"
   project,
   categories = [],
   tags = [],
@@ -43,6 +43,7 @@ const Modal = ({
   const tagBlurTimerRef = useRef(null);
 
   const isEdit = mode === "edit";
+  const isImage = mode === "image";
   const canUseDialogs =
     typeof window !== "undefined" &&
     window.electronAPI?.selectImage &&
@@ -57,6 +58,11 @@ const Modal = ({
   };
 
   const previewSrc = useMemo(() => toDisplayImageSrc(formImg), [formImg]);
+
+  const imagePreviewSrc = useMemo(() => {
+    if (!isImage) return "";
+    return toDisplayImageSrc(project?.img);
+  }, [isImage, project]);
 
   const tagInputState = useMemo(() => {
     const raw = String(formTags ?? "");
@@ -175,6 +181,46 @@ const Modal = ({
   };
 
   if (!isOpen) return null;
+
+  if (isImage) {
+    return (
+      <div className="modal-overlay" onMouseDown={handleOverlayMouseDown}>
+        <div
+          className="modal-card modal-card--image"
+          role="dialog"
+          aria-modal="true"
+          aria-label={title}
+          onMouseDown={(event) => event.stopPropagation()}
+        >
+          <div className="modal-header modal-header--image">
+            <div className="modal-title">{title}</div>
+
+            <button
+              type="button"
+              className="icon-btn"
+              aria-label="Close modal"
+              title="Close"
+              onClick={resetAndClose}
+            >
+              <IoMdClose size={18} />
+            </button>
+          </div>
+
+          <div className="modal-body modal-body--image">
+            {imagePreviewSrc ? (
+              <img
+                className="modal-image"
+                src={imagePreviewSrc}
+                alt={title}
+              />
+            ) : (
+              <div className="modal-image-empty">No image</div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const applyTagSuggestion = (suggestion) => {
     const cleaned = String(suggestion ?? "").trim();

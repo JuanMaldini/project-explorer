@@ -271,6 +271,14 @@ function App() {
     setIsModalOpen(true);
   };
 
+  const openImageModal = (project) => {
+    const safeTitle = String(project?.title ?? "Image");
+    setModalTitle(safeTitle);
+    setModalMode("image");
+    setModalProject(project ?? null);
+    setIsModalOpen(true);
+  };
+
   const closeModal = useCallback(() => {
     setIsModalOpen(false);
     setModalProject(null);
@@ -545,6 +553,7 @@ function App() {
           title={project?.title}
           description={project?.description}
           path={project?.path}
+          onPreviewImage={() => openImageModal(project)}
           onEdit={() => openEditModal(project)}
           onDelete={() => deleteProject(project)}
         />

@@ -8,6 +8,7 @@ const {
   dialog,
 } = require("electron");
 const path = require("path");
+const fsSync = require("fs");
 const fs = require("fs/promises");
 const crypto = require("crypto");
 
@@ -56,6 +57,11 @@ app.commandLine.appendSwitch(
 app.commandLine.appendSwitch("disable-gpu-shader-disk-cache");
 
 const isPackaged = app.isPackaged;
+
+if (process.platform === "win32") {
+  // Helps Windows show the correct taskbar icon/grouping.
+  app.setAppUserModelId("com.projectexplorer.app");
+}
 
 let mainWindow = null;
 
@@ -320,7 +326,21 @@ const createWindow = async () => {
   const startUrl = process.env.ELECTRON_START_URL;
   const isDevServer = !isPackaged && Boolean(startUrl);
 
-  mainWindow = new BrowserWindow({
+  const windowIconCandidates = [
+    path.join(app.getAppPath(), "build", "icons", "app.png"),
+    path.join(app.getAppPath(), "electron", "assets", "app.png"),
+    path.join(app.getAppPath(), "public", "icons", "app.png"),
+  ];
+
+  const windowIcon = windowIconCandidates.find((p) => {
+    try {
+      return fsSync.existsSync(p);
+    } catch {
+      return false;
+    }
+  });
+
+  const windowOptions = {
     width: 1200,
     height: 800,
     backgroundColor: "#0b0b0b",
@@ -334,7 +354,13 @@ const createWindow = async () => {
       webSecurity: !isDevServer,
       sandbox: false,
     },
-  });
+  };
+
+  if (windowIcon) {
+    windowOptions.icon = windowIcon;
+  }
+
+  mainWindow = new BrowserWindow(windowOptions);
 
   if (isDevServer) {
     await mainWindow.loadURL(startUrl);
@@ -567,8 +593,6 @@ app.whenReady().then(async () => {
     const raw = normalizeOpenPathInput(targetPath);
     if (!raw) return false;
 
-    // Tries to open the folder/file using the OS shell.
-    // Works with local paths and UNC paths.
     const result = await shell.openPath(raw);
     if (result) throw new Error(result);
     return true;

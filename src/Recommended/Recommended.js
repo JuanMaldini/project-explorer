@@ -2,6 +2,7 @@ import "./Recommended.css";
 import { IoIosAddCircleOutline } from "react-icons/io";
 import { CiExport } from "react-icons/ci";
 import { CiImport } from "react-icons/ci";
+import { RiSignalTowerLine } from "react-icons/ri";
 import "../components/IconButton.css";
 
 const Recommended = ({
@@ -17,7 +18,23 @@ const Recommended = ({
   onAdd,
   onExport,
   onImport,
+  onToggleServerSync,
+  serverSyncEnabled = false,
+  serverSyncFolderPath = "",
 }) => {
+  const hasServerSyncFolder = Boolean(String(serverSyncFolderPath ?? "").trim());
+  const serverSyncTitle = serverSyncEnabled
+    ? `Server sync (ON)\n${serverSyncFolderPath}`
+    : hasServerSyncFolder
+      ? `Server sync (OFF)\n${serverSyncFolderPath}`
+      : "Server sync (OFF)\nSelect shared folder";
+
+  const serverSyncClass = serverSyncEnabled
+    ? "icon-btn icon-btn--connected"
+    : hasServerSyncFolder
+      ? "icon-btn icon-btn--ready"
+      : "icon-btn icon-btn--inactive";
+
   return (
     <>
       <div className="recommended-panel">
@@ -48,10 +65,20 @@ const Recommended = ({
             type="button"
             className="icon-btn"
             aria-label="Import projects"
-            title="Import projects (overwrite)"
+            title="Import projects (overwrite active data)"
             onClick={() => onImport?.()}
           >
             <CiImport size={22} />
+          </button>
+
+          <button
+            type="button"
+            className={serverSyncClass}
+            aria-label="Server sync"
+            title={serverSyncTitle}
+            onClick={() => onToggleServerSync?.()}
+          >
+            <RiSignalTowerLine size={22} />
           </button>
 
           <input

@@ -13,6 +13,19 @@
     transform 140ms ease;
 }
 
+.icon-btn--inactive {
+  opacity: 0.55;
+}
+
+.icon-btn--ready {
+  opacity: 0.85;
+}
+
+.icon-btn--connected {
+  color: var(--color-text);
+  background: var(--color-surface-2);
+}
+
 .icon-btn:hover {
   color: var(--color-text);
   background: var(--color-surface-2);

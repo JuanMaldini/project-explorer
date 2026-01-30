@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Products from "./Products/Products";
 import Recommended from "./Recommended/Recommended";
 import Card from "./components/Card";
@@ -37,6 +37,32 @@ const normalizeProjectPaths = (project) => {
   };
 };
 
+const sanitizeRawPathJsonIfNeeded = (text) => {
+  const sanitizeField = (input, fieldName) =>
+    String(input ?? "").replace(
+      new RegExp(
+        `"${fieldName}"\\s*:\\s*"([^"\\\\]*(?:\\\\.[^"\\\\]*)*)"`,
+        "g",
+      ),
+      (match, fieldValue) => {
+        const fixed = String(fieldValue).replace(/\\(?!["\\/bfnrtu])/g, "\\\\");
+        return match.replace(fieldValue, fixed);
+      },
+    );
+
+  const s1 = sanitizeField(text, "path");
+  return sanitizeField(s1, "img");
+};
+
+const parseProjectsText = (text) => {
+  try {
+    return JSON.parse(String(text ?? ""));
+  } catch {
+    const sanitized = sanitizeRawPathJsonIfNeeded(text);
+    return JSON.parse(String(sanitized ?? ""));
+  }
+};
+
 function App() {
   const [projects, setProjects] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
@@ -47,37 +73,130 @@ function App() {
   const [modalMode, setModalMode] = useState("add");
   const [modalProject, setModalProject] = useState(null);
 
+  const [serverSyncEnabled, setServerSyncEnabled] = useState(false);
+  const [serverSyncFolderPath, setServerSyncFolderPath] = useState("");
+
+  const projectsRef = useRef(projects);
+  useEffect(() => {
+    projectsRef.current = projects;
+  }, [projects]);
+
+  const showMessage = useCallback(async ({ type, title, message, detail }) => {
+    const api = typeof window !== "undefined" ? window.electronAPI : undefined;
+
+    const safeTitle = String(title ?? "Project Explorer");
+    const safeMessage = String(message ?? "");
+    const safeDetail = String(detail ?? "");
+
+    if (api?.showMessageBox) {
+      await api.showMessageBox({
+        type: type === "error" ? "error" : "info",
+        title: safeTitle,
+        message: safeMessage,
+        detail: safeDetail,
+      });
+      return;
+    }
+
+    // Web fallback
+    window.alert([safeTitle, safeMessage, safeDetail].filter(Boolean).join("\n\n"));
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
+    const api = typeof window !== "undefined" ? window.electronAPI : undefined;
+    if (!api?.getServerSyncSettings) return;
 
-    const sanitizeRawPathJsonIfNeeded = (text) => {
-      const sanitizeField = (input, fieldName) =>
-        String(input ?? "").replace(
-          new RegExp(
-            `"${fieldName}"\\s*:\\s*"([^"\\\\]*(?:\\\\.[^"\\\\]*)*)"`,
-            "g",
-          ),
-          (match, fieldValue) => {
-            const fixed = String(fieldValue).replace(
-              /\\(?!["\\/bfnrtu])/g,
-              "\\\\",
-            );
-            return match.replace(fieldValue, fixed);
-          },
-        );
+    api
+      .getServerSyncSettings()
+      .then((s) => {
+        if (cancelled) return;
+        setServerSyncEnabled(Boolean(s?.enabled));
+        setServerSyncFolderPath(String(s?.folderPath ?? ""));
+      })
+      .catch(() => {
+        // ignore
+      });
 
-      const s1 = sanitizeField(text, "path");
-      return sanitizeField(s1, "img");
+    return () => {
+      cancelled = true;
     };
+  }, []);
 
-    const parseProjectsText = (text) => {
+  useEffect(() => {
+    const api = typeof window !== "undefined" ? window.electronAPI : undefined;
+    if (!api?.onServerSyncDataChanged || !api?.onServerSyncStatus) return;
+
+    const offData = api.onServerSyncDataChanged(async (payload) => {
       try {
-        return JSON.parse(String(text ?? ""));
-      } catch {
-        const sanitized = sanitizeRawPathJsonIfNeeded(text);
-        return JSON.parse(String(sanitized ?? ""));
+        const rawText = String(payload?.text ?? "");
+        const parsed = parseProjectsText(rawText);
+        const array = Array.isArray(parsed) ? parsed : [];
+        const normalized = array.map(normalizeProjectPaths);
+        setProjects(normalized);
+      } catch (err) {
+        await showMessage({
+          type: "error",
+          title: "Server data.json is invalid",
+          message:
+            "Could not parse server data.json. Switching back to local mode.",
+          detail:
+            "Fix the JSON file in the shared folder or use Import to overwrite it.",
+        });
+
+        try {
+          await api.disableServerSync?.({ syncToLocal: false });
+        } catch {
+          // ignore
+        }
       }
+    });
+
+    const offStatus = api.onServerSyncStatus(async (status) => {
+      const enabled = Boolean(status?.enabled);
+      setServerSyncEnabled(enabled);
+
+      if (typeof status?.folderPath === "string") {
+        setServerSyncFolderPath(status.folderPath);
+      }
+
+      if (status?.type === "error") {
+        await showMessage({
+          type: "error",
+          title: "Server sync disabled",
+          message:
+            status?.message ||
+            "Lost connection to shared folder. Switched back to local mode.",
+          detail:
+            "You can keep working locally and re-enable server sync later.",
+        });
+
+        // Best-effort: persist current in-memory projects to local data.json.
+        try {
+          const payload = Array.isArray(projectsRef.current)
+            ? projectsRef.current.map(normalizeProjectPaths)
+            : [];
+          setTimeout(() => {
+            api
+              .saveProjects?.(payload)
+              .catch(() => {
+                // ignore
+              });
+          }, 50);
+        } catch {
+          // ignore
+        }
+      }
+    });
+
+    return () => {
+      offData?.();
+      offStatus?.();
     };
+  }, [showMessage]);
+
+  useEffect(() => {
+    let cancelled = false;
 
     const load = async () => {
       try {
@@ -114,8 +233,21 @@ function App() {
         } catch {
           // ignore auto-heal failures
         }
-      } catch {
+      } catch (err) {
         if (!cancelled) setProjects([]);
+
+        const api =
+          typeof window !== "undefined" ? window.electronAPI : undefined;
+        if (api?.showMessageBox) {
+          await showMessage({
+            type: "error",
+            title: "Failed to load data.json",
+            message:
+              "Could not load or parse the current data.json. Working with an empty list.",
+            detail:
+              "If you are using server sync, check the shared folder availability. Otherwise, use Import to restore a backup.",
+          });
+        }
       }
     };
 
@@ -123,7 +255,7 @@ function App() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [showMessage]);
 
   const openAddModal = () => {
     setModalTitle("Add Project");
@@ -144,19 +276,42 @@ function App() {
     setModalProject(null);
   }, []);
 
-  const persistProjects = useCallback(async (nextProjects) => {
+  const persistTimerRef = useRef(null);
+  const pendingPersistRef = useRef(null);
+
+  const persistProjects = useCallback((nextProjects) => {
+    const normalized = Array.isArray(nextProjects)
+      ? nextProjects.map(normalizeProjectPaths)
+      : [];
+    pendingPersistRef.current = normalized;
+
     try {
       const api =
         typeof window !== "undefined" ? window.electronAPI : undefined;
-      if (api?.saveProjects) {
-        const normalized = Array.isArray(nextProjects)
-          ? nextProjects.map(normalizeProjectPaths)
-          : [];
-        await api.saveProjects(normalized);
+      if (!api?.saveProjects) return;
+
+      if (persistTimerRef.current) {
+        clearTimeout(persistTimerRef.current);
       }
+
+      persistTimerRef.current = setTimeout(async () => {
+        try {
+          await api.saveProjects(pendingPersistRef.current || []);
+        } catch {
+          // keep UI state even if persistence fails
+        }
+      }, 350);
     } catch {
-      // keep UI state even if persistence fails
+      // ignore
     }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (persistTimerRef.current) {
+        clearTimeout(persistTimerRef.current);
+      }
+    };
   }, []);
 
   const deleteProject = useCallback(
@@ -283,6 +438,62 @@ function App() {
     }
   }, []);
 
+  const toggleServerSync = useCallback(async () => {
+    const api = typeof window !== "undefined" ? window.electronAPI : undefined;
+    if (!api?.enableServerSync || !api?.disableServerSync) {
+      await showMessage({
+        type: "error",
+        title: "Server sync not available",
+        message: "This feature requires the Electron desktop app.",
+      });
+      return;
+    }
+
+    if (!serverSyncEnabled) {
+      try {
+        const payload = Array.isArray(projects)
+          ? projects.map(normalizeProjectPaths)
+          : [];
+        const res = await api.enableServerSync(payload);
+        if (res?.cancelled) return;
+        if (!res?.enabled) return;
+
+        setServerSyncEnabled(true);
+        setServerSyncFolderPath(String(res?.folderPath ?? ""));
+
+        const parsed = parseProjectsText(res?.text);
+        const array = Array.isArray(parsed) ? parsed : [];
+        setProjects(array.map(normalizeProjectPaths));
+      } catch (err) {
+        setServerSyncEnabled(false);
+        await showMessage({
+          type: "error",
+          title: "Cannot enable server sync",
+          message: String(err?.message || err || "Unknown error"),
+          detail:
+            "Make sure the shared folder is reachable and you have write permission.",
+        });
+      }
+      return;
+    }
+
+    // Disable (and copy server data.json -> local data.json)
+    try {
+      const res = await api.disableServerSync({ syncToLocal: true });
+      setServerSyncEnabled(false);
+      if (typeof res?.folderPath === "string") {
+        setServerSyncFolderPath(res.folderPath);
+      }
+    } catch (err) {
+      setServerSyncEnabled(false);
+      await showMessage({
+        type: "error",
+        title: "Server sync disabled with errors",
+        message: String(err?.message || err || "Unknown error"),
+      });
+    }
+  }, [projects, serverSyncEnabled, showMessage]);
+
   const categories = useMemo(() => {
     const list = projects
       .flatMap((p) => {
@@ -359,6 +570,9 @@ function App() {
               onAdd={openAddModal}
               onExport={exportAllProjects}
               onImport={importAllProjects}
+              onToggleServerSync={toggleServerSync}
+              serverSyncEnabled={serverSyncEnabled}
+              serverSyncFolderPath={serverSyncFolderPath}
             />
             <div className="spacerbar-section" />
             <Products result={result} />

@@ -14,7 +14,7 @@
     "react-scripts": "5.0.1"
   },
   "scripts": {
-    "start": "concurrently -k \"react-scripts start\" \"wait-on http://localhost:3000 && cross-env ELECTRON_START_URL=http://localhost:3000 electron .\"",
+    "start": "concurrently -k \"cross-env BROWSER=none PORT=3001 react-scripts start\" \"wait-on http://localhost:3001 && cross-env ELECTRON_START_URL=http://localhost:3001 electron .\"",
     "start:prod": "react-scripts build && electron .",
     "build": "react-scripts build",
     "electron:build": "react-scripts build && set CSC_IDENTITY_AUTO_DISCOVERY=false&& electron-builder --win",

@@ -3,6 +3,7 @@ import Products from "./Products/Products";
 import Recommended from "./Recommended/Recommended";
 import Card from "./components/Card";
 import Modal from "./modal/modal";
+import "./App.css";
 import "./index.css";
 
 function App() {
@@ -220,6 +221,7 @@ function App() {
               onSelectCategory={selectCategory}
               onAdd={openAddModal}
             />
+            <div className="spacerbar-section" />
             <Products result={result} />
           </div>
         </div>

@@ -5,19 +5,24 @@
 }
 
 .recommended-titlebar {
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 10;
   display: flex;
   align-items: center;
   justify-content: flex-start;
+  flex-wrap: nowrap;
   gap: 12px;
   height: var(--header-height);
   padding: 0 20px;
-  margin: -20px -20px 0;
+  margin: 0;
   background: var(--color-surface);
   color: var(--color-text);
   border-bottom: 1px solid var(--color-accent-2);
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .recommended-title {
@@ -25,6 +30,8 @@
   font-size: 20px;
   font-weight: 600;
   color: var(--color-text);
+  white-space: nowrap;
+  flex: 0 0 auto;
 }
 
 .recommended-search {
@@ -36,6 +43,8 @@
   border-radius: 5px;
   width: 14rem;
   max-width: 100%;
+  flex: 1 1 14rem;
+  min-width: 10rem;
 }
 
 .recommended-search::placeholder {
@@ -49,7 +58,7 @@
 .recommended-columns {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 18px;
+  gap: 1rem;
 }
 
 .recommended-col {
@@ -83,15 +92,13 @@
 
 @media (max-width: 900px) {
   .recommended-titlebar {
-    flex-wrap: wrap;
-    height: auto;
     padding: 12px 20px;
     gap: 10px;
   }
 
   .recommended-search {
-    flex: 1 1 100%;
-    width: 100%;
+    width: auto;
+    min-width: 8rem;
   }
 
   .recommended-columns {

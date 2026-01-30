@@ -65,43 +65,47 @@ const Card = ({ img, title, description, path, onEdit, onDelete }) => {
             target.src = FALLBACK_IMAGE_SRC;
           }}
         />
-        <div className="card-details">
-          <h3 className="card-title">{title}</h3>
-          {String(description ?? "").trim() ? (
-            <p className="card-description">{description}</p>
-          ) : null}
-        </div>
+        <div className="card-spacer" aria-hidden="true" />
 
-        <div className="card-actions">
-          <button
-            type="button"
-            className="icon-btn"
-            aria-label="Open folder"
-            title="Open folder"
-            onClick={handleOpenFolder}
-          >
-            <FaRegFolderOpen size={18} />
-          </button>
+        <div className="card-bottom">
+          <div className="card-details">
+            <h3 className="card-title">{title}</h3>
+            {String(description ?? "").trim() ? (
+              <p className="card-description">{description}</p>
+            ) : null}
+          </div>
 
-          <button
-            type="button"
-            className="icon-btn"
-            aria-label="Edit"
-            title="Edit"
-            onClick={() => onEdit?.()}
-          >
-            <FaRegEdit size={18} />
-          </button>
+          <div className="card-actions">
+            <button
+              type="button"
+              className="icon-btn"
+              aria-label="Open folder"
+              title="Open folder"
+              onClick={handleOpenFolder}
+            >
+              <FaRegFolderOpen size={18} />
+            </button>
 
-          <button
-            type="button"
-            className="icon-btn"
-            aria-label="Delete"
-            title="Delete"
-            onClick={() => onDelete?.()}
-          >
-            <MdDeleteOutline size={18} />
-          </button>
+            <button
+              type="button"
+              className="icon-btn"
+              aria-label="Edit"
+              title="Edit"
+              onClick={() => onEdit?.()}
+            >
+              <FaRegEdit size={18} />
+            </button>
+
+            <button
+              type="button"
+              className="icon-btn"
+              aria-label="Delete"
+              title="Delete"
+              onClick={() => onDelete?.()}
+            >
+              <MdDeleteOutline size={18} />
+            </button>
+          </div>
         </div>
       </section>
     </>

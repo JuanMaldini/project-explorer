@@ -38,7 +38,6 @@ const Recommended = ({
             placeholder="Search"
           />
 
-
          </div>
 
         <div className="recommended-columns">

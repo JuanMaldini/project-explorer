@@ -5,7 +5,6 @@
   font-family: sans-serif;
 }
 
-
 :root {
   --header-height: 80px;
 
@@ -59,7 +58,7 @@ body {
 .app-main-content {
   flex: 1;
   min-width: 0;
-  padding: 20px;
+  padding: calc(20px + var(--header-height)) 20px 20px;
 }
 
 a {

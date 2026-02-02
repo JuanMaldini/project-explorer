@@ -1,6 +1,8 @@
 {
   "name": "project-explorer",
   "version": "0.1.0",
+  "description": "Project Explorer Application",
+  "author": "Project Explorer",
   "private": true,
   "homepage": "./",
   "main": "electron/main.js",

@@ -1,25 +1,19 @@
 # Project Explorer
 
-App de escritorio (Electron + React) para guardar y explorar tus proyectos en formato “tarjetas”: podés **buscar**, **filtrar** por categorías/tags, **agregar/editar/eliminar** y abrir la carpeta del proyecto desde el sistema.
+./info.png
 
-## Uso rápido
+Desktop app (Electron + React) to save and explore your projects in a “card” format: you can **search**, **filter** by categories/tags, **add/edit/delete**, and open the project folder from the system.
 
-- Instalar dependencias: `npm install`
-- Abrir la app (desarrollo, recarga automática): `npm start`
-- Abrir la app (modo build/local, como antes): `npm run start:prod`
-- Generar build web: `npm run build`
-- Empaquetar para Windows (installer): `npm run dist`
+## Quick start
 
-Los datos se persisten en `data.json` (en desarrollo se usa `public/data.json`; empaquetado se guarda en `%AppData%\ProjectExplorer\data.json`).
+- Install dependencies: `npm install`
+- Open the app (development, auto-reload): `npm start`
+- Open the app (build/local mode, as before): `npm run start:prod`
+- Generate web build: `npm run build`
+- Package for Windows (installer): `npm run dist`
 
-## Cómo funciona (simple)
+Data is persisted in `data.json` (in development it uses `public/data.json`; packaged version is saved in `%AppData%\ProjectExplorer\data.json`).
 
-La UI React lee/filtra la lista, y cuando guardás cambios llama a Electron por IPC para persistir el JSON y para acciones del sistema (abrir una carpeta, copiar texto, elegir imágenes/carpetas).
+## How it works (simple)
 
-```mermaid
-flowchart LR
-   UI[React UI] -->|window.electronAPI| PRE[preload.js]
-   PRE -->|IPC invoke| MAIN[electron/main.js]
-   MAIN -->|read/write| JSON[(data.json)]
-   MAIN -->|openPath / clipboard / dialogs| OS[Windows Shell]
-```
+The React UI reads/filters the list, and when you save changes it calls Electron via IPC to persist the JSON and for system actions (open a folder, copy text, choose images/folders).

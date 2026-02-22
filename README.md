@@ -1,6 +1,6 @@
 # Project Explorer
 
-./info.png
+![Info](./info.png)
 
 Desktop app (Electron + React) to save and explore your projects in a “card” format: you can **search**, **filter** by categories/tags, **add/edit/delete**, and open the project folder from the system.
 
